@@ -1,0 +1,294 @@
+<html>
+<head>
+	<title>Solar</title>
+	<style type="text/css">
+		canvas{
+			border: 1px solid rgba(120,120,120,0.6);
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			right: 0px;
+			bottom: 0px;
+			width: 666px;
+			height: 666px;
+		}
+		body{
+			position: relative;
+		}
+	</style>
+</head>
+<body>
+	<canvas width="666" height="666" id="solar"></canvas>
+
+	<script type="text/javascript">
+	var pulseSpeed = 100;
+	var heightLimit = 666;
+	var widthLimit = 666;
+		function getRandomColor(){
+			var red = Math.floor(Math.random()*255);
+			var green = Math.floor(Math.random()*255);
+			var blue = Math.floor(Math.random()*255);
+
+			return red + ',' +  green + ',' + blue;
+		}
+
+		Speed = {
+			verySlow : 1,
+			slow : 3,
+			normal : 4.5,
+			fast : 7,
+			veryFast : 9			
+		};
+
+
+ function truncate(_value)
+{
+  if (_value<0) return Math.ceil(_value);
+  else return Math.floor(_value);
+}
+	Circle = function(height, width, radius, color){
+		    var height = height;
+		    var width = width; 
+		    var radius = radius;
+		    var color = color;
+		    this.pulseInterval;
+		    var pulseMaxRadius;
+		    var pulseMinRadius;
+		    var childs = new Array();
+
+
+		    this.getWidth = function(){
+		        return width;
+		    };
+		    this.getHeight = function(){
+		        return height;
+		    };
+		    this.getRadius = function(){
+		        return radius;
+		    };
+		    this.getColor = function(){
+		        return color;
+		    };
+		    this.paintMe = function(){		   
+		         for (var i = childs.length - 1; i >= 0; i--) {
+		        	childs[i].paintMe();
+		        };
+		        context.circle(this.getHeight(), this.getWidth(), this.getRadius(),    this.getColor());
+
+		        return this;
+		    };
+
+		    this.larger = function(size){
+		    	radius = radius+size;
+		    	return this;
+		    };
+
+
+		    this.smaller = function(size){
+		    	radius = radius-size;
+		    	return this;
+		    };
+
+		    this.canGrow = function(){
+		    	return radius < pulseMaxRadius;
+		    };
+
+
+		    this.canReduce = function(){
+		    	return radius >= pulseMinRadius+0.2;
+		    };
+    		growCircle = function(circle){
+    			
+    			 if(circle.canGrow()){
+    				circle.larger(0.1);
+    			} else{
+    				clearInterval(circle.pulseInterval);
+    				circle.pulseInterval = setInterval(function(){
+			    		absorbCircle(circle);
+			        },pulseSpeed);
+
+    			}
+    		};
+
+    		absorbCircle = function(circle){
+ 				if(circle.canReduce()){
+    				circle.smaller(0.1);
+    			} else{
+    				clearInterval(circle.pulseInterval);
+	    			circle.pulseInterval = setInterval(function(){
+			    		growCircle(circle);
+			        },pulseSpeed);
+
+    			}
+    		}
+
+		    this.pulse = function(size){
+		    	pulseMaxRadius = this.getRadius()+size;
+		    	pulseMinRadius = this.getRadius();
+		    	var me = this;
+		    	this.pulseInterval = setInterval(function(){
+		    		growCircle(me);
+		        },pulseSpeed);
+		        return this;
+		    };
+		    this.moveOnce = function(x, y){
+		    	width += x; 
+		    	height +=y;
+		    	this.propagateMovement(x, y);
+		    };
+		    this.move = function(x, y){
+		    	var me = this;
+		    	width += x; 
+		    	height +=y;
+		    	this.propagateMovement(x, y);
+		    	if(width >= widthLimit-radius || width <= 0+radius){
+		    		x = -x;
+		    	}
+		    	if(height >= heightLimit-radius|| height <=0+radius){
+		    		y = -y;
+		    	}
+
+		    	setTimeout(function(){
+		    		me.move(x, y);	
+		    	}, 60);
+		    	return this;
+		    };
+		   
+
+
+		    this.circularMove = function(x, y){
+		    	var me = this;
+		    	time = new Date().getTime();
+		    	var movx = Math.sin(time % 2000 / 2000.0 * Math.PI * 2) * x >>0;
+		    	var movy = Math.cos(time% 2000 / 2000.0 * Math.PI * 2) * y >> 0;
+		    	console.log("hey : " + movx + "circular " + movy);
+		    	width += movx;
+		    	height += movy;
+		    	this.propagateMovement(movx, movy);
+		    	setTimeout(function(){
+		    		me.circularMove(x, y);	
+
+		    	}, 1000/60);
+		    	return this;
+		    };
+
+		    this.propagateMovement = function(x, y){
+		    	for (var i = childs.length - 1; i >= 0; i--) {
+		    		childs[i].moveOnce(x,y);
+		    	};
+		    };
+		    this.addChild = function(elem){
+		    	childs.push(elem);
+
+		    }
+		}
+		Context = function(context){
+			var ctx = context;
+			var backgroundStars = new Array();
+			var stars = new Array();
+			var paintingInterval;
+			var delay = 1000/60;
+
+				for(var i = 90; i>=0; --i){
+					var tempX = Math.random()*widthLimit; 
+					var tempY = Math.random()*heightLimit; 
+					var tempSize = Math.random()*2;
+					var tempCircle = new Circle(tempX,tempY,tempSize, getRandomColor());
+					tempCircle.pulse(2);
+					backgroundStars.push(tempCircle);	
+				}
+
+			this.circle = function(x, y, r, c){
+	           ctx.beginPath();
+	           var rad = ctx.createRadialGradient(x, y, 0.1, x, y, r);
+	           rad.addColorStop(0, 'rgba('+c+',1)');
+	           rad.addColorStop(1, 'rgba('+c+',0)');
+	           ctx.fillStyle = rad;
+	           ctx.arc(x, y, r, 0, Math.PI*2, false);
+	           ctx.fill();
+	           return this;
+		    };
+		    this.paintBackground = function(color){
+		    	ctx.fillStyle=color;
+				ctx.fillRect(0, 0, widthLimit, heightLimit);
+/*				for (var i = backgroundStars.length - 1; i >= 0; i--) {
+					backgroundStars[i].paintMe();
+				};*/
+				return this;
+		    };
+		    this.getDelay = function(){
+		    	return delay;
+		    };
+		    this.paintForeground = function(){
+				for (var i = stars.length - 1; i >= 0; i--) {
+					stars[i].paintMe();
+
+				};
+		    };
+		    this.paintEveryThing = function(){
+		    	
+		    	me.paintBackground("black");
+		    	me.paintForeground("black");
+		    };
+		    this.beginPainting = function(){
+		    	me = this;
+		    	paintingInterval = setInterval(function(){
+
+		    		me.paintEveryThing();
+		        },delay);
+		    };
+		    this.addNewStar = function(star){
+		    	stars.push(star);
+		    }
+
+		}
+
+
+		function getRandomNumber(){
+			return Math.random()*33;
+		}
+		var context =  new Context(document.getElementById('solar').getContext('2d'));
+		context.beginPainting();
+		
+		var oneTerra = 10;
+		var mercureCircular = 40;
+		var sun = new Circle(500,500, oneTerra*15, "255,255,0").pulse(5);
+		var mercure = new Circle(480,520,oneTerra/2-1, "255,127,80").pulse(2);
+		var venus= new Circle(480,520,oneTerra, "255,69,0").pulse(2);
+		var terra= new Circle(480,520,oneTerra, "0,191,255").pulse(2);
+		var mars= new Circle(480,520,oneTerra/2, "220,20,60").pulse(2);
+		var jupiter= new Circle(480,520,oneTerra*8, " 178,34,34").pulse(3);
+		var saturne= new Circle(480,520,oneTerra*7, "255,240,245").pulse(3);
+		var uranus= new Circle(480,520,oneTerra*4, "0,191,255").pulse(3);
+		var neptune= new Circle(480,520,oneTerra*3, "0,0,255").pulse(3);
+		var pluton= new Circle(480,520,oneTerra/3, "240,248,255").pulse(2);
+
+		context.addNewStar(sun.move(Speed.fast, Speed.fast));
+
+		sun.addChild(mercure.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(venus.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(terra.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(mars.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(jupiter.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(saturne.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(uranus.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(neptune.circularMove(getRandomNumber(),getRandomNumber()));
+		sun.addChild(pluton.circularMove(getRandomNumber(),getRandomNumber()));
+
+	
+		/*
+		var cir = new Circle(333,120,15, "255,255,255").pulse(5);
+		cir.addChild(new Circle(333-30,120-30,5, "255,0,0").pulse(4).circularMove(20,20));
+
+
+ 
+
+		context.addNewStar(cir);
+
+
+		context.addNewStar(new Circle(333,333,15, "255,255,0").pulse(4).move(Speed.veryFast, Speed.fast));
+		*/
+	</script>
+</body>
+</html>
+
