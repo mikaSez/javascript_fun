@@ -17,7 +17,7 @@ function Tree(val, deepLevel){
     var deep = deepLevel != undefined?deepLevel: 0;
     var value = val;
 
-    canvas = (function(){
+    var canvas = (function(){
         this.canvas;
 
         return {
@@ -30,10 +30,6 @@ function Tree(val, deepLevel){
 
         }
     })();
-
-    var setCanvas = function(canvas){
-
-    }
     this.addNew = function(element){
         var temp = element;
         if(temp == undefined  || value == temp ){
@@ -96,76 +92,79 @@ function Tree(val, deepLevel){
 
     var offset = 30;
     var distance = 50;
-
     var radius = 17;
+
     this.paintOnCanvas = function(){
         var localCanvas = canvas.getCanvas();
+        if(localCanvas == undefined){
+            console.log("no canvas associated, can't paint ! :(, try .setCanvas(canvasID)");
+            return;
+        }
+
         var height = localCanvas.height;
         var width = localCanvas.width;
         var horizontalPosition = width/2+10;
-        //distance = height/(this.getMaxDeep()+1);
         var context = localCanvas.getContext('2d');
+
         context.fillStyle = "white";
         context.fillRect(0,0,width,height);
-        context.beginPath();
-        context.fillStyle = "rgba(120,120,120,0.6)";
-        context.arc(horizontalPosition, offset, radius, 0, Math.PI*2, false);
-        context.fill();
-        context.closePath();
+
+        paintCircle(horizontalPosition,offset,radius, "rgba(120,120,120,0.6)");
 
         context.fillStyle = "white";
         context.fillText(this.getValue(),horizontalPosition-3,offset+2);
-       //
 
         var offsetLeft = left.getMaxDeep() * 40;
-
         var offsetRight = right.getMaxDeep() * 40;
         if(this.getLeft() != undefined){
-            paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition-offsetLeft, offset+distance, context);
-            paintOnPosition(horizontalPosition-offsetLeft, offset+distance, this.getLeft(), context, "red");
+            paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition-offsetLeft, offset+distance);
+            paintOnPosition(horizontalPosition-offsetLeft, offset+distance, this.getLeft(), "red");
        }
          if(this.getRight() != undefined){
-             paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition+offsetRight, offset+distance, context);
-             paintOnPosition(horizontalPosition+offsetRight, offset+distance, this.getRight(), context, "blue");
+             paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition+offsetRight, offset+distance);
+             paintOnPosition(horizontalPosition+offsetRight, offset+distance, this.getRight(), "blue");
         }
 
 
 
     };
-    var paintLineToPosition = function(x,y,toX,toY, context){
-
+    var paintLineToPosition = function(x,y,toX,toY){
+        var context = canvas.getCanvas().getContext('2d');
         context.lineWidth = 2;
         context.beginPath();
         context.moveTo(x, y);
         context.lineTo(toX, toY);
         context.stroke();
     };
-    this.getDeep = function(){
-        return deep;
-    };
 
-    var paintOnPosition = function(x, y, element, context, color){
-
+    var paintCircle = function(x, y, radius, color){
+        var context = canvas.getCanvas().getContext('2d');
         context.beginPath();
         context.fillStyle = color;
         context.arc(x, y, radius, 0, Math.PI*2, false);
         context.fill();
         context.closePath();
+    };
+    this.getDeep = function(){
+        return deep;
+    };
 
-
-
-
+    var paintOnPosition = function(x, y, element, color){
+        var context = canvas.getCanvas().getContext('2d');
+        paintCircle(x,y,radius, color);
         context.fillStyle = "white";
         context.fillText(element.getValue(),x-3,y+2);
+        /*
+         * pure magic readable tree in ~80% cases for n <= 30. Better positioning or collision detection should do the job...
+         * maybe some time later
+         */
         if(element.getLeft() != undefined){
-            paintLineToPosition(x, y+radius,x-(10*(element.getLeft().getDeep()+1)), y+distance, context);
-            paintOnPosition(x-(10*(element.getLeft().getDeep()+1)), y+distance, element.getLeft(), context, "red");
+            paintLineToPosition(x, y+radius,x-(10*(element.getLeft().getDeep()+1)), y+distance);
+            paintOnPosition(x-(10*(element.getLeft().getDeep()+1)), y+distance, element.getLeft(), "red");
         }
         if(element.getRight() != undefined){
-
-            paintLineToPosition(x, y+radius,x+(10*(element.getRight().getDeep()+1)), y+distance, context);
-
-            paintOnPosition(x+(10*(element.getRight().getDeep()+1)), y+distance, element.getRight(), context, "blue");
+            paintLineToPosition(x, y+radius,x+(10*(element.getRight().getDeep()+1)), y+distance);
+            paintOnPosition(x+(10*(element.getRight().getDeep()+1)), y+distance, element.getRight(), "blue");
         }
     }
 }
@@ -178,6 +177,7 @@ tree.addNew(Math.floor(Math.random()*150));
 console.log(tree.getMaxDeep());
 console.log(tree.getMaxDeep());
 
+tree.addNew("heh");
 tree.setCanvas("canvas");
 
 tree.paintOnCanvas();
