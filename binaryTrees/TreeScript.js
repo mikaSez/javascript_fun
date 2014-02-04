@@ -2,6 +2,14 @@
  * Created by mis on 04/02/14.
  */
 
+
+function getRandomColor(){
+    var red = Math.floor(Math.random()*255);
+    var green = Math.floor(Math.random()*255);
+    var blue = Math.floor(Math.random()*255);
+
+    return red + ',' +  green + ',' + blue;
+}
 function Tree(val, deepLevel){
     var left = undefined;
     var right = undefined;
@@ -89,48 +97,84 @@ function Tree(val, deepLevel){
     var offset = 30;
     var distance = 50;
 
-
+    var radius = 17;
     this.paintOnCanvas = function(){
         var localCanvas = canvas.getCanvas();
         var height = localCanvas.height;
         var width = localCanvas.width;
+        var horizontalPosition = width/2+10;
         //distance = height/(this.getMaxDeep()+1);
         var context = localCanvas.getContext('2d');
-        paintOnPosition(width/2+10, offset, this, context, "rgba(120,120,120,0.6)" );
-    };
+        context.fillStyle = "white";
+        context.fillRect(0,0,width,height);
+        context.beginPath();
+        context.fillStyle = "rgba(120,120,120,0.6)";
+        context.arc(horizontalPosition, offset, radius, 0, Math.PI*2, false);
+        context.fill();
+        context.closePath();
 
+        context.fillStyle = "white";
+        context.fillText(this.getValue(),horizontalPosition-3,offset+2);
+       //
+
+        var offsetLeft = left.getMaxDeep() * 40;
+
+        var offsetRight = right.getMaxDeep() * 40;
+        if(this.getLeft() != undefined){
+            paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition-offsetLeft, offset+distance, context);
+            paintOnPosition(horizontalPosition-offsetLeft, offset+distance, this.getLeft(), context, "red");
+       }
+         if(this.getRight() != undefined){
+             paintLineToPosition(horizontalPosition, offset+radius,horizontalPosition+offsetRight, offset+distance, context);
+             paintOnPosition(horizontalPosition+offsetRight, offset+distance, this.getRight(), context, "blue");
+        }
+
+
+
+    };
+    var paintLineToPosition = function(x,y,toX,toY, context){
+
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(toX, toY);
+        context.stroke();
+    };
     this.getDeep = function(){
         return deep;
     };
 
     var paintOnPosition = function(x, y, element, context, color){
+
         context.beginPath();
         context.fillStyle = color;
-        context.arc(x, y, 20, 0, Math.PI*2, false);
+        context.arc(x, y, radius, 0, Math.PI*2, false);
         context.fill();
         context.closePath();
 
+
+
+
         context.fillStyle = "white";
-        context.fillText(element.getValue(),x,y+5);
+        context.fillText(element.getValue(),x-3,y+2);
         if(element.getLeft() != undefined){
-            paintOnPosition(x-(15*(5-element.getDeep()+1)), y+distance, element.getLeft(), context, "red");
+            paintLineToPosition(x, y+radius,x-(10*(element.getLeft().getDeep()+1)), y+distance, context);
+            paintOnPosition(x-(10*(element.getLeft().getDeep()+1)), y+distance, element.getLeft(), context, "red");
         }
         if(element.getRight() != undefined){
-            paintOnPosition(x+(15*(5-element.getDeep()+1)), y+distance, element.getRight(), context, "black");
+
+            paintLineToPosition(x, y+radius,x+(10*(element.getRight().getDeep()+1)), y+distance, context);
+
+            paintOnPosition(x+(10*(element.getRight().getDeep()+1)), y+distance, element.getRight(), context, "blue");
         }
     }
 }
 
 
-var tree = new Tree(4);
-tree.addNew(3);
-tree.addNew(2);
-tree.addNew(1);
-tree.addNew(8);
-tree.addNew(9);
-tree.addNew(5);
-tree.addNew(4);
-
+var tree = new Tree(75);
+var n = 30;
+while(n--)
+tree.addNew(Math.floor(Math.random()*150));
 console.log(tree.getMaxDeep());
 console.log(tree.getMaxDeep());
 
